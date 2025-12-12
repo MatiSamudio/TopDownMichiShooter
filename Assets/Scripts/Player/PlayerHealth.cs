@@ -5,7 +5,10 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     [Header("Health")]
     public float maxHealth = 100f;
 
-    public float CurrentHealth => currentHealth;  // propiedad de solo lectura
+    public float CurrentHealth => currentHealth;
+
+    [Header("Refs")]
+    public GameManager gameManager;   // ← referencia directa
 
     float currentHealth;
     bool isDead;
@@ -13,6 +16,10 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     void Awake()
     {
         currentHealth = maxHealth;
+
+        // por si te olvidás de asignar en el inspector
+        if (gameManager == null)
+            gameManager = FindObjectOfType<GameManager>();
     }
 
     public void TakeDamage(float amount, Vector2 hitPoint)
@@ -20,7 +27,6 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         if (isDead) return;
 
         currentHealth -= amount;
-        Debug.Log($"Player recibe {amount} de da�o. HP = {currentHealth}");
 
         if (currentHealth <= 0f)
         {
@@ -33,16 +39,15 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         if (isDead) return;
         isDead = true;
 
-        // cortar movimiento
         var controller = GetComponent<TopDownPlayerController2D>();
         if (controller) controller.enabled = false;
 
         var rb = GetComponent<Rigidbody2D>();
         if (rb) rb.linearVelocity = Vector2.zero;
 
-        // avisar al GameManager
-        if (GameManager.Instance != null)
-            GameManager.Instance.PlayerDied();
+        if (gameManager != null)
+            gameManager.PlayerDied();
+        else
+            Debug.LogWarning("PlayerHealth: no hay GameManager asignado");
     }
-
 }

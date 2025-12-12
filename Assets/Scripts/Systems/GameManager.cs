@@ -3,28 +3,16 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
-
     [Header("UI")]
     public GameObject gameOverPanel;
-
-    void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
 
     public void PlayerDied()
     {
         Time.timeScale = 0f;
-        if (gameOverPanel)
+        if (gameOverPanel != null)
             gameOverPanel.SetActive(true);
+        else
+            Debug.LogWarning("GameManager: gameOverPanel no asignado");
     }
 
     public void RetryLevel()
