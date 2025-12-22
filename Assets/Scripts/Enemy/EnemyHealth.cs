@@ -6,6 +6,8 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
     private float currentHealth;
 
+    public System.Action OnDeath;
+
     private void Awake()
     {
         currentHealth = maxHealth;
@@ -22,9 +24,10 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         }
     }
 
-    private void Die()
+    public void Die()
     {
         // Después podés disparar animación, partículas, etc.
+        OnDeath?.Invoke();
         Destroy(gameObject);
     }
 }

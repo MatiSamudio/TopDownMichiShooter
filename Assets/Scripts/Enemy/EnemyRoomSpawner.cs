@@ -14,6 +14,15 @@ public class EnemyRoomSpawner : MonoBehaviour
     public BoxCollider2D singleRoomSpawnArea;   // área donde se spawnean enemigos
     public DoorLock singleRoomDoorLock;         // puerta que se abrirá cuando mueran todos
 
+    class RoomSpawnData
+    {
+        public int enemyCount;
+        public bool spawned;
+    }
+
+    readonly Dictionary<ProceduralRoomGenerator, RoomSpawnData> _roomData =
+        new Dictionary<ProceduralRoomGenerator, RoomSpawnData>();
+
     void Start()
     {
         // Este Start solo se usa en escenas sin MultiRoomGenerator / sin rooms procedurales
@@ -29,16 +38,9 @@ public class EnemyRoomSpawner : MonoBehaviour
         SpawnInSingleRoom();
     }
 
-    /// <summary>
-    /// Llamado por MultiRoomGenerator cuando ya generó TODOS los rooms.
-    /// </summary>
-    public void SpawnEnemiesInRooms(IEnumerable<ProceduralRoomGenerator> rooms)
+    public void RegisterRooms(IEnumerable<ProceduralRoomGenerator> rooms)
     {
-        if (enemyPrefab == null)
-        {
-            Debug.LogError("EnemyRoomSpawner: asigná enemyPrefab.");
-            return;
-        }
+        _roomData.Clear();
 
         foreach (var room in rooms)
         {
@@ -52,26 +54,62 @@ public class EnemyRoomSpawner : MonoBehaviour
             }
 
             int enemyCount = Random.Range(minEnemiesPerRoom, maxEnemiesPerRoom + 1);
-            doorLock.SetEnemiesToClear(enemyCount);
 
-            for (int i = 0; i < enemyCount; i++)
+            _roomData[room] = new RoomSpawnData
             {
-                Vector3 spawnPos = room.GetRandomFloorWorldPosition();
-                GameObject enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+                enemyCount = enemyCount,
+                spawned = false
+            };
 
-                EnemyHealth health = enemy.GetComponent<EnemyHealth>();
-                if (health != null)
+            // Dejamos la puerta preparada para bloquear hasta limpiar SU room.
+            // (Cuenta = enemigos que existirán cuando spawnee ese room)
+            doorLock.SetEnemiesToClear(enemyCount);
+        }
+    }
+
+    public void SpawnEnemiesForRoom(ProceduralRoomGenerator room)
+    {
+        if (enemyPrefab == null)
+        {
+            Debug.LogError("EnemyRoomSpawner: asigná enemyPrefab.");
+            return;
+        }
+
+        if (room == null)
+            return;
+
+        if (!_roomData.TryGetValue(room, out var data))
+        {
+            // No está registrado (por si llamás a esto antes de RegisterRooms)
+            return;
+        }
+
+        if (data.spawned)
+            return;
+
+        data.spawned = true;
+
+        DoorLock doorLock = room.generatedDoorLock;
+        if (doorLock == null)
+            return;
+
+        for (int i = 0; i < data.enemyCount; i++)
+        {
+            Vector3 spawnPos = room.GetRandomFloorWorldPosition();
+            GameObject enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+
+            EnemyHealth health = enemy.GetComponent<EnemyHealth>();
+            if (health != null)
+            {
+                DoorLock capturedDoor = doorLock;
+                health.OnDeath += () =>
                 {
-                    DoorLock capturedDoor = doorLock;
-                    health.OnDeath += () =>
-                    {
-                        capturedDoor.NotifyEnemyKilled();
-                    };
-                }
-                else
-                {
-                    Debug.LogWarning("EnemyRoomSpawner: enemyPrefab no tiene EnemyHealth.");
-                }
+                    capturedDoor.NotifyEnemyKilled();
+                };
+            }
+            else
+            {
+                Debug.LogWarning("EnemyRoomSpawner: enemyPrefab no tiene EnemyHealth.");
             }
         }
     }

@@ -23,6 +23,7 @@ public class DoorDestination : MonoBehaviour
     [Header("Room mode")]
     public Transform roomTargetPosition;   // a dónde teletransportar al player
     public Collider2D roomCameraBounds;    // bounds para CinemachineConfiner2D
+    public GameObject spawner;
 
     void Reset()
     {
@@ -35,7 +36,7 @@ public class DoorDestination : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.CompareTag("Player"))
+        if (!other.CompareTag("P_Player"))
             return;
 
         if (doorLock != null && doorLock.IsLocked)
@@ -49,6 +50,7 @@ public class DoorDestination : MonoBehaviour
 
             case DoorMode.Room:
                 TeleportToRoom(other.transform);
+                spawner.SetActive(true);
                 break;
         }
     }
@@ -67,7 +69,8 @@ public class DoorDestination : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(sceneToLoad);
+        SceneLoader.Load(sceneToLoad);
+
     }
 
     void TeleportToRoom(Transform player)
@@ -93,6 +96,20 @@ public class DoorDestination : MonoBehaviour
                 {
                     confiner.BoundingShape2D = roomCameraBounds;
                     confiner.InvalidateBoundingShapeCache();
+                }
+            }
+        }
+
+        // 3) Spawn enemigos del room destino (cuando entrás)
+        if (roomCameraBounds != null)
+        {
+            var gen = roomCameraBounds.GetComponentInParent<ProceduralRoomGenerator>();
+            if (gen != null)
+            {
+                var spawner = FindFirstObjectByType<EnemyRoomSpawner>();
+                if (spawner != null)
+                {
+                    spawner.SpawnEnemiesForRoom(gen);
                 }
             }
         }

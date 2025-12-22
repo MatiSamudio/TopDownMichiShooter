@@ -14,7 +14,7 @@ public class HeartsUI : MonoBehaviour
     void Start()
     {
         if (!playerHealth)
-            playerHealth = FindObjectOfType<PlayerHealth>();
+            playerHealth = FindFirstObjectByType<PlayerHealth>();
 
         heartTemplate.gameObject.SetActive(false);
 

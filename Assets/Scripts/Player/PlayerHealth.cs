@@ -19,7 +19,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
         // por si te olvidás de asignar en el inspector
         if (gameManager == null)
-            gameManager = FindObjectOfType<GameManager>();
+            gameManager = FindFirstObjectByType<GameManager>();
     }
 
     public void TakeDamage(float amount, Vector2 hitPoint)
