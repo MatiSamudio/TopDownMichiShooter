@@ -13,6 +13,14 @@ public class Bullet : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        int bulletLayer = gameObject.layer;
+        int UILayer = LayerMask.NameToLayer("UI");
+
+        if (UILayer != -1)
+        {
+            Physics2D.IgnoreLayerCollision(bulletLayer , UILayer, true);
+        }
     }
 
     private void OnEnable()

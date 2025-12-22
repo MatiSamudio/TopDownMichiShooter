@@ -129,7 +129,8 @@ public class MultiRoomGenerator : MonoBehaviour
         var spawner = FindFirstObjectByType<EnemyRoomSpawner>();
         if (spawner != null)
         {
-            spawner.SpawnEnemiesInRooms(_roomGenerators);
+            spawner.RegisterRooms(_roomGenerators);
+            spawner.SpawnEnemiesForRoom(_roomGenerators[0]);
         }
     }
 }
